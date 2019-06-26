@@ -1,0 +1,20 @@
+.form-box
+{
+    margin: 2vw 30vw;
+    padding: 10px;
+    border-style: solid;
+    border-width: 0.5px;
+    border-radius: 10px;
+    box-shadow: 5px 7px rgba(44, 41, 44, 0.2);
+}
+
+legend
+{
+    text-align: center;
+}
+
+.center-block
+{
+    margin: 0 auto;
+    display: block;
+}

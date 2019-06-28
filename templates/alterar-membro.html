@@ -1,53 +1,11 @@
 {% extends "layout.html" %}
 
 {% block main%}
-
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
-  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
-  <script>
-    $(document).ready( function () {
-      $('#members_table').DataTable( {
-        "order": [[ 0, "asc" ]],
-        "paging": false,
-        "bInfo": false,
-        language: {
-          search: "Buscar:"
-        }
-      } );
-    } );
-  </script>
-  <div class="table-container">
-    <table id="members_table" class="table striped member-table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Documento</th>
-          <th>Nº</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for member in members %}
-        <tr>
-          <td>{{ member.name }}</td>
-          <td>{{ member.id_type }}</td>
-          <td style="white-space: nowrap">{{ member.id_number }}</td>
-          <td>
-            <form action="/alterarmembro" method='post'>
-              <input type="hidden" name="member-id" value="{{ member.member_id }}">
-              <input type="submit" value="Alterar">
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
   <div class="form-box">
     <form action="" method="POST">
       {{ form.hidden_tag() }}
       <fieldset class="form-group">
-      <legend class="border-bottom mb-4">Adicionar Membro</legend>
+      <legend class="border-bottom mb-4">Alterar Membro</legend>
       <div class="form-group">
         {{ form.name.label(class="form-control-label") }}
         {% if form.name.errors %}

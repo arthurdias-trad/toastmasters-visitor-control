@@ -7,8 +7,9 @@ import requests
 from flask import Flask, render_template, url_for, redirect, request, flash, session
 from flask_session import Session
 from helpers import login_required
-from forms import LoginForm, MemberForm
+from forms import LoginForm, MemberForm, MemberChangeForm
 from werkzeug import generate_password_hash, check_password_hash
+from werkzeug.datastructures import MultiDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from database import Member, Guest
@@ -43,6 +44,25 @@ def after_request(response):
 def index():
     return render_template("/index.html")
 
+@app.route('/alterarmembro', methods=['POST'])
+def alterar_membro():
+    member_id = request.form.get('member-id')
+    member = db.query(Member).filter(Member.member_id == member_id).first()
+    if member:
+        form = MemberChangeForm(formdata=MultiDict({'name': member.name, 'id_type': member.id_type, 'id_number': member.id_number, 'member_id': member_id}))
+    else:
+        form = MemberChangeForm()
+        
+    if form.validate_on_submit():
+        member_id = form.member_id.data
+        print(member_id)
+        db.query(Member).filter(Member.member_id == member_id).update({"name":form.name.data, "id_type":form.id_type.data, "id_number":form.id_number.data})
+        db.commit()
+        flash("Membro alterado com sucesso", "success")
+        return redirect(url_for("members"))
+
+    return render_template("alterar-membro.html", member=member, form=form)
+
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     form = LoginForm()
@@ -54,13 +74,13 @@ def login():
         if user_info:
             if check_password_hash(user_info[0][2], password):
                 session["user_id"] = user_info[0][0]
-                flash(f"Welcome, {username}", 'success')
+                flash(f"Boas-vindas, {username}", 'success')
                 return redirect("/")
             else:
-                flash("Invalid password", 'danger')
+                flash("Senha inválida", 'danger')
                 return redirect(url_for('login'))
         else:
-            flash("User not found", 'danger')
+            flash("Usuário inválido", 'danger')
             return redirect(url_for('login'))
 
     return render_template('/login.html', form=form)
@@ -69,7 +89,7 @@ def login():
 @login_required
 def logout():
     session.clear()
-    flash("You have been logged out", "success")
+    flash("Você encerrou a sessão", "success")
     return redirect("/")
 
 @app.route("/membros", methods=['GET', 'POST'])
@@ -80,6 +100,7 @@ def members():
     if form.validate_on_submit():
         db.add(Member(name=form.name.data, id_type=form.id_type.data, id_number=form.id_number.data))
         db.commit()
+        flash("Membro adicionado com sucesso", "success")
         return redirect(url_for("members"))
     
     return render_template("membros.html", form=form, members=members)

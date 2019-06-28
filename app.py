@@ -1,12 +1,17 @@
+# encoding: utf-8
+# encoding: iso-8859-1
+# encoding: win-1252
+
 import os
 import requests
 from flask import Flask, render_template, url_for, redirect, request, flash, session
 from flask_session import Session
 from helpers import login_required
-from forms import LoginForm
+from forms import LoginForm, MemberForm
 from werkzeug import generate_password_hash, check_password_hash
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from database import Member, Guest
 
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
@@ -66,6 +71,19 @@ def logout():
     session.clear()
     flash("You have been logged out", "success")
     return redirect("/")
+
+@app.route("/membros", methods=['GET', 'POST'])
+def members():
+    form = MemberForm()
+    members = db.query(Member).order_by(Member.member_id)
+
+    if form.validate_on_submit():
+        db.add(Member(name=form.name.data, id_type=form.id_type.data, id_number=form.id_number.data))
+        db.commit()
+        return redirect(url_for("members"))
+    
+    return render_template("membros.html", form=form, members=members)
+
 
 if __name__ == "__main__":
     app.run()

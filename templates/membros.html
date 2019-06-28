@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block main%}
+
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+  <script>
+    $(document).ready( function () {
+      $('#members_table').DataTable( {
+        "order": [[ 0, "asc" ]],
+        "paging": false,
+        "bInfo": false,
+        language: {
+          search: "Buscar:"
+        }
+      } );
+    } );
+  </script>
+  <div class="table-container">
+    <table id="members_table" class="table striped member-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Documento</th>
+          <th>Nº</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+        <tr>
+          <td>{{ member.name }}</td>
+          <td>{{ member.id_type }}</td>
+          <td style="white-space: nowrap">{{ member.id_number }}</td>
+          <td>Alterar</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="form-box">
+    <form action="" method="POST">
+      {{ form.hidden_tag() }}
+      <fieldset class="form-group">
+      <legend class="border-bottom mb-4">Adicionar Membro</legend>
+      <div class="form-group">
+        {{ form.name.label(class="form-control-label") }}
+        {% if form.name.errors %}
+          {{ form.name(class="form-control form-control-lg is-invalid") }}
+          <div class="invalid-feedback">
+          {% for error in form.name.errors %}
+            <span> {{ error }}</span>
+          {% endfor %}
+          </div>
+        {% else %}
+          {{ form.name(class="form-control form-control-lg")}}
+        {% endif %}
+      </div>
+      <div class="form-group">
+        {{ form.id_type.label(class='form-control-label')}}
+        {% if form.id_type.errors %}
+          {{ form.id_type(class='form-control form-control-lg is-invalid')}}
+          <div class="invalid-feedback">
+          {% for error in form.id_type.errors %}
+            <span> {{ error }}</span>
+          {% endfor %}
+          </div>
+        {% else %}
+          {{ form.id_type(class='form-control form-control-lg')}}
+        {% endif %}
+      </div>
+      <div class="form-group">
+        {{ form.id_number.label(class='form-control-label')}}
+        {% if form.id_number.errors %}
+          {{ form.id_number(class='form-control form-control-lg is-invalid')}}
+          <div class="invalid-feedback">
+          {% for error in form.id_number.errors %}
+            <span> {{ error }}</span>
+          {% endfor %}
+          </div>
+        {% else %}
+          {{ form.id_number(class='form-control form-control-lg')}}
+        {% endif %}
+      </div>
+      </fieldset>
+      <div class="form-group">
+        {{ form.submit(class='btn btn-primary center-block')}}
+      </div>
+    </form>
+  </div>
+{% endblock %}

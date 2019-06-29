@@ -7,12 +7,12 @@ import requests
 from flask import Flask, render_template, url_for, redirect, request, flash, session
 from flask_session import Session
 from helpers import login_required
-from forms import LoginForm, MemberForm, MemberChangeForm
+from forms import LoginForm, MemberForm, MemberChangeForm, DeleteForm
 from werkzeug import generate_password_hash, check_password_hash
 from werkzeug.datastructures import MultiDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from database import Member, Guest
+from database import Member, Guest, User
 
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
@@ -52,19 +52,58 @@ def alterar_membro():
         form = MemberChangeForm(formdata=MultiDict({'name': member.name, 'id_type': member.id_type, 'id_number': member.id_number, 'member_id': member_id}))
     else:
         form = MemberChangeForm()
-        
     if form.validate_on_submit():
         member_id = form.member_id.data
-        print(member_id)
-        db.query(Member).filter(Member.member_id == member_id).update({"name":form.name.data, "id_type":form.id_type.data, "id_number":form.id_number.data})
-        db.commit()
-        flash("Membro alterado com sucesso", "success")
-        return redirect(url_for("members"))
+        if form.delete.data == True:
+            session["member_to_delete"] = member_id
+            return redirect(url_for("delete"))
+        else:
+            db.query(Member).filter(Member.member_id == member_id).update({"name":form.name.data, "id_type":form.id_type.data, "id_number":form.id_number.data})
+            db.commit()
+            flash("Membro alterado com sucesso", "success")
+            return redirect(url_for("members"))
 
     return render_template("alterar-membro.html", member=member, form=form)
 
+@app.route("/excluirmembro", methods=['POST', 'GET'])
+def delete():
+    member_id = session["member_to_delete"]
+    print(member_id)
+    form = DeleteForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        user = db.query(User).filter(User.username == username).first()
+        if user:
+            if session["user_id"] == user.user_id:
+                if check_password_hash(user.password, password):
+                    db.query(Member).filter(Member.member_id == member_id).delete()
+                    db.commit()
+                    session["member_to_delete"] = None
+                    flash("Membro excluído com sucesso", 'success')
+                    return redirect(url_for('members'))
+                else:
+                    session["member_to_delete"] = None
+                    flash("Senha inválida", 'danger')
+                    return redirect(url_for('members'))
+            else:
+                session["member_to_delete"] = None
+                flash("Usuário inválido", 'danger')
+                return redirect(url_for('members')) 
+        else:
+            session["member_to_delete"] = None
+            flash("Usuário inválido", 'danger')
+            return redirect(url_for('members'))    
+
+    return render_template("delete.html", form=form, member_id=member_id) 
+
+
 @app.route('/login', methods=['POST', 'GET'])
 def login():
+    if session["user_id"]:
+        return redirect(url_for('index'))
+    
     form = LoginForm()
 
     if form.validate_on_submit():

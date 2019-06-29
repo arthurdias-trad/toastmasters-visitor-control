@@ -37,10 +37,16 @@ legend, .alert
     .table-container {
         margin: 5vh 9vw;
     }
+    .form-box {
+        margin: 2vw 10vw;
+    }
 }
 
 @media only screen and (max-width: 700px) {
     .table-container {
         margin: 5vh;
+    }
+    .form-box {
+        margin: 2vw 5vw;
     }
 }

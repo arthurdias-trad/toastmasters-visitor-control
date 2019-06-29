@@ -7,6 +7,10 @@
       <fieldset class="form-group">
       <legend class="border-bottom mb-4">Alterar Membro</legend>
       <div class="form-group">
+        {{ form.delete()}}
+        {{ form.delete.label() }}
+      </div>
+      <div class="form-group">
         {{ form.name.label(class="form-control-label") }}
         {% if form.name.errors %}
           {{ form.name(class="form-control form-control-lg is-invalid") }}

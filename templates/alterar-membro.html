@@ -20,7 +20,7 @@
           {% endfor %}
           </div>
         {% else %}
-          {{ form.name(class="form-control form-control-lg")}}
+          {{ form.name(class="form-control form-control-lg fields")}}
         {% endif %}
       </div>
       <div class="form-group">
@@ -33,7 +33,7 @@
           {% endfor %}
           </div>
         {% else %}
-          {{ form.id_type(class='form-control form-control-lg')}}
+          {{ form.id_type(class='form-control form-control-lg fields')}}
         {% endif %}
       </div>
       <div class="form-group">
@@ -46,7 +46,7 @@
           {% endfor %}
           </div>
         {% else %}
-          {{ form.id_number(class='form-control form-control-lg')}}
+          {{ form.id_number(class='form-control form-control-lg fields')}}
         {% endif %}
       </div>
       </fieldset>
@@ -55,4 +55,23 @@
       </div>
     </form>
   </div>
+  <script>
+    let elements = document.getElementsByClassName("fields");
+    let del = document.querySelector("#delete");
+    let button = document.querySelector('#submit');
+    let exclude = false;
+    window.onload = () => {
+      del.onclick = function() {
+        exclude = !exclude;
+        for (element of elements) {
+          element.disabled = !element.disabled;
+        };
+        if (exclude == true) {
+          button.value = "Excluir";
+        } else {
+          button.value = "Alterar";
+        };
+      };
+    };
+  </script>
 {% endblock %}

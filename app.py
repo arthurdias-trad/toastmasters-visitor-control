@@ -101,9 +101,9 @@ def delete():
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-    if session["user_id"]:
+    if session.get("user_id"):
         return redirect(url_for('index'))
-    
+
     form = LoginForm()
 
     if form.validate_on_submit():

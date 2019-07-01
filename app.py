@@ -4,10 +4,12 @@
 
 import os
 import requests
-from flask import Flask, render_template, url_for, redirect, request, flash, session
+import csv
+from datetime import datetime
+from flask import Flask, render_template, url_for, redirect, request, flash, session, send_file
 from flask_session import Session
 from helpers import login_required
-from forms import LoginForm, MemberForm, MemberChangeForm, DeleteForm
+from forms import LoginForm, MemberForm, MemberChangeForm, DeleteForm, GuestForm
 from werkzeug import generate_password_hash, check_password_hash
 from werkzeug.datastructures import MultiDict
 from sqlalchemy import create_engine
@@ -44,7 +46,30 @@ def after_request(response):
 def index():
     return render_template("/index.html")
 
+@app.route('/convidados', methods=['get', 'post'])
+@login_required
+def guests():
+    form = GuestForm()
+    guests = db.query(Guest).order_by(Guest.guest_id)
+    
+    if form.validate_on_submit():
+        db.add(Guest(name=form.name.data, id_type=form.id_type.data, id_number=form.id_number.data, tm_member=form.tm_member.data))
+        db.commit()
+        flash("Convidado adicionado com sucesso", "success")
+        return redirect(url_for("guests"))
+    
+    return render_template("convidados.html", form=form, guests=guests)
+
+@app.route('/lista')
+@login_required
+def lista():
+    members = db.query(Member).order_by(Member.name)
+    guests = db.query(Guest).order_by(Guest.name)
+
+    return render_template("/lista.html", members=members, guests=guests)
+
 @app.route('/alterarmembro', methods=['POST'])
+@login_required
 def alterar_membro():
     member_id = request.form.get('member-id')
     member = db.query(Member).filter(Member.member_id == member_id).first()
@@ -66,6 +91,7 @@ def alterar_membro():
     return render_template("alterar-membro.html", member=member, form=form)
 
 @app.route("/excluirmembro", methods=['POST', 'GET'])
+@login_required
 def delete():
     member_id = session["member_to_delete"]
     print(member_id)
@@ -98,6 +124,25 @@ def delete():
 
     return render_template("delete.html", form=form, member_id=member_id) 
 
+@app.route('/exportar', methods=['GET'])
+def export():
+    date = datetime.today().strftime('%d-%m-%y')
+    members = db.query(Member).order_by(Member.name)
+    guests = db.query(Guest).order_by(Guest.name)
+
+    with open(f'lista_{date}.csv', mode="w", encoding='utf-8') as csv_file:
+        file_writer = csv.writer(csv_file, delimiter=',', dialect="excel")
+
+        file_writer.writerow(["Membros"])
+        file_writer.writerow(["Nome", "Documento", "Nº"])
+        for member in members:
+            file_writer.writerow([member.name, member.id_type, member.id_number])
+        file_writer.writerow(["Convidados"])
+        file_writer.writerow(["Nome", "Documento", "Nº"])
+        for guest in guests:
+            file_writer.writerow([guest.name, guest.id_type, guest.id_number])
+        
+    return send_file(f"./lista_{date}.csv", mimetype='text/csv', attachment_filename=f'lista_{date}.csv', as_attachment=True)
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -132,6 +177,7 @@ def logout():
     return redirect("/")
 
 @app.route("/membros", methods=['GET', 'POST'])
+@login_required
 def members():
     form = MemberForm()
     members = db.query(Member).order_by(Member.member_id)

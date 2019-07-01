@@ -18,6 +18,14 @@ class MemberForm(FlaskForm):
     id_number = StringField("Nº do Documento", validators=[InputRequired()])
     submit = SubmitField("Adicionar")
 
+class GuestForm(FlaskForm):
+    name = StringField("Nome", validators=[InputRequired()])
+    guest_id = HiddenField("Guest-ID")
+    id_type = StringField("Tipo de Documento", validators=[InputRequired()], render_kw={"placeholder": "RG, RNE, Passporte"})
+    id_number = StringField("Nº do Documento", validators=[InputRequired()])
+    tm_member = BooleanField("É membro de outro clube?")
+    submit = SubmitField("Adicionar")
+
 class MemberChangeForm(FlaskForm):
     delete = BooleanField("Excluir?")
     member_id = HiddenField("Member-ID")

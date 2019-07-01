@@ -1,0 +1,65 @@
+{% extends 'layout.html' %}
+
+{% block main %}
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+  <script>
+    $(document).ready( function () {
+      $('#full_list').DataTable( {
+        "order": [[ 0, "asc" ]],
+        "paging": false,
+        "bInfo": false,
+        "searching": false,
+        "ordering": false,
+      } );
+    } );
+  </script>
+  <div class="list-container">
+    <table id="full_list" class="table striped full-list">
+      <thead>
+        <tr>
+            <th colspan="3" style="text-align: center">Membros</th>
+        </tr>
+        <tr>
+          <th>Nome</th>
+          <th>Documento</th>
+          <th>Nº</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+        <tr>
+          <td>{{ member.name }}</td>
+          <td>{{ member.id_type }}</td>
+          <td style="white-space: nowrap">{{ member.id_number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% if guests.all() %}
+        <thead>
+          <tr>
+            <th colspan="3" style="text-align: center">Convidados</th>
+          </tr>
+          <tr>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th>Nº</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for guest in guests %}
+          <tr>
+            <td>{{ guest.name }}</td>
+            <td>{{ guest.id_type }}</td>
+            <td style="white-space: nowrap">{{ guest.id_number }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      {% endif %}
+    </table>
+  </div>
+  <div class="buttons">
+    <button class='btn btn-primary center-block' onclick="window.location.href = './exportar'">Exportar lista</button>
+  </div>
+
+{% endblock %}

@@ -1,3 +1,6 @@
 credentials.txt
 *.csv
 members.txt
+__pycache__/
+.vscode/
+paulista_project/

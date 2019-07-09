@@ -9,7 +9,7 @@ from datetime import datetime
 from flask import Flask, render_template, url_for, redirect, request, flash, session, send_file
 from flask_session import Session
 from helpers import login_required
-from forms import LoginForm, MemberForm, MemberChangeForm, DeleteForm, GuestForm
+from forms import LoginForm, MemberForm, MemberChangeForm, DeleteForm, GuestForm, GuestChangeForm
 from werkzeug import generate_password_hash, check_password_hash
 from werkzeug.datastructures import MultiDict
 from sqlalchemy import create_engine
@@ -22,6 +22,8 @@ if not os.getenv("DATABASE_URL"):
 app = Flask(__name__)
 app.debug = True
 app.config["SECRET_KEY"] = "development"
+
+# Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Configure session to use filesystem
@@ -34,6 +36,7 @@ URL = os.getenv("DATABASE_URL")
 engine = create_engine(URL)
 db = scoped_session(sessionmaker(bind=engine))
 
+# Ensure responses aren't cached
 @app.after_request
 def after_request(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -49,6 +52,7 @@ def index():
 @app.route('/convidados', methods=['get', 'post'])
 @login_required
 def guests():
+    """Show full list of guests and add new guests to list"""
     form = GuestForm()
     guests = db.query(Guest).order_by(Guest.guest_id)
     
@@ -63,6 +67,7 @@ def guests():
 @app.route('/lista')
 @login_required
 def lista():
+    """Show complete list with both club members and guests"""
     members = db.query(Member).order_by(Member.name)
     guests = db.query(Guest).order_by(Guest.name)
 
@@ -71,6 +76,7 @@ def lista():
 @app.route('/alterarmembro', methods=['POST'])
 @login_required
 def alterar_membro():
+    """Change club member information or delete club member"""
     member_id = request.form.get('member-id')
     member = db.query(Member).filter(Member.member_id == member_id).first()
     if member:
@@ -80,7 +86,8 @@ def alterar_membro():
     if form.validate_on_submit():
         member_id = form.member_id.data
         if form.delete.data == True:
-            session["member_to_delete"] = member_id
+            session["to_delete"] = member_id
+            session['origin'] = "membro"
             return redirect(url_for("delete"))
         else:
             db.query(Member).filter(Member.member_id == member_id).update({"name":form.name.data, "id_type":form.id_type.data, "id_number":form.id_number.data})
@@ -90,11 +97,35 @@ def alterar_membro():
 
     return render_template("alterar-membro.html", member=member, form=form)
 
-@app.route("/excluirmembro", methods=['POST', 'GET'])
+@app.route('/alterarconvidado', methods=['POST'])
+@login_required
+def alterar_convidado():
+    """Change guest information or delete guest"""
+    guest_id = request.form.get('guest-id')
+    guest = db.query(Guest).filter(Guest.guest_id == guest_id).first()
+    if guest:
+        form = GuestChangeForm(formdata=MultiDict({'name': guest.name, 'id_type': guest.id_type, 'id_number': guest.id_number, 'guest_id': guest.guest_id, 'tm_member': guest.tm_member}))
+    else:
+        form = GuestChangeForm()
+    if form.validate_on_submit():
+        guest_id = form.guest_id.data
+        if form.delete.data == True:
+            session["to_delete"] = guest_id
+            session['origin'] = "convidado"
+            return redirect(url_for("delete"))
+        else:
+            db.query(Guest).filter(Guest.guest_id == guest_id).update({"name":form.name.data, "id_type":form.id_type.data, "id_number":form.id_number.data, 'tm_member': form.tm_member.data})
+            db.commit()
+            flash("Convidado alterado com sucesso", 'success')
+            return redirect(url_for("guests"))
+    
+    return render_template("alterar-convidado.html", form=form, guest=guest)
+
+@app.route("/excluir", methods=['POST', 'GET'])
 @login_required
 def delete():
-    member_id = session["member_to_delete"]
-    print(member_id)
+    """Require username and password to delete guest or club member"""
+    delete_id = session["to_delete"]
     form = DeleteForm()
 
     if form.validate_on_submit():
@@ -104,34 +135,58 @@ def delete():
         if user:
             if session["user_id"] == user.user_id:
                 if check_password_hash(user.password, password):
-                    db.query(Member).filter(Member.member_id == member_id).delete()
-                    db.commit()
-                    session["member_to_delete"] = None
-                    flash("Membro excluído com sucesso", 'success')
-                    return redirect(url_for('members'))
+                    if session['origin'] == 'convidado':
+                        session['origin'] = None
+                        db.query(Guest).filter(Guest.guest_id == delete_id).delete()
+                        db.commit()
+                        session["to_delete"] = None
+                        flash("Convidado excluído com sucesso", 'success')
+                        return redirect(url_for('guests'))
+
+                    else:
+                        db.query(Member).filter(Member.member_id == delete_id).delete()
+                        db.commit()
+                        session["to_delete"] = None
+                        session['origin'] = None
+                        flash("Membro excluído com sucesso", 'success')
+                        return redirect(url_for('members'))                       
+                    
                 else:
-                    session["member_to_delete"] = None
+                    session["to_delete"] = None
                     flash("Senha inválida", 'danger')
+                    if session['origin'] == 'convidado':
+                        session['origin'] = None
+                        return redirect(url_for('guests'))
+                    session['origin'] = None
                     return redirect(url_for('members'))
             else:
-                session["member_to_delete"] = None
+                session["to_delete"] = None
                 flash("Usuário inválido", 'danger')
+                if session['origin'] == 'convidado':
+                    session['origin'] = None
+                    return redirect(url_for('guests'))
+                session['origin'] = None
                 return redirect(url_for('members')) 
         else:
-            session["member_to_delete"] = None
+            session["to_delete"] = None
             flash("Usuário inválido", 'danger')
+            if session['origin'] == 'convidado':
+                session['origin'] = None
+                return redirect(url_for('guests'))
+            session['origin'] = None
             return redirect(url_for('members'))    
 
-    return render_template("delete.html", form=form, member_id=member_id) 
+    return render_template("delete.html", form=form, delete_id=delete_id) 
 
 @app.route('/exportar', methods=['GET'])
 def export():
+    """Export the full list of guests and club members as a CSV file with current date"""
     date = datetime.today().strftime('%d-%m-%y')
     members = db.query(Member).order_by(Member.name)
     guests = db.query(Guest).order_by(Guest.name)
 
     with open(f'lista_{date}.csv', mode="w", encoding='utf-8') as csv_file:
-        file_writer = csv.writer(csv_file, delimiter=',', dialect="excel")
+        file_writer = csv.writer(csv_file, delimiter='\t', dialect="excel")
 
         file_writer.writerow(["Membros"])
         file_writer.writerow(["Nome", "Documento", "Nº"])
@@ -146,6 +201,8 @@ def export():
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
+    """Allow users to login to the website"""
+    # Checks if user is already logged and redirects to index
     if session.get("user_id"):
         return redirect(url_for('index'))
 
@@ -158,7 +215,7 @@ def login():
         if user_info:
             if check_password_hash(user_info[0][2], password):
                 session["user_id"] = user_info[0][0]
-                flash(f"Boas-vindas, {username}", 'success')
+                flash(f"Boas-vindas, {user_info[0][3]}", 'success')
                 return redirect("/")
             else:
                 flash("Senha inválida", 'danger')
@@ -172,6 +229,7 @@ def login():
 @app.route("/logout", methods=["GET"])
 @login_required
 def logout():
+    """Logs user out and ends the session"""
     session.clear()
     flash("Você encerrou a sessão", "success")
     return redirect("/")
@@ -179,6 +237,7 @@ def logout():
 @app.route("/membros", methods=['GET', 'POST'])
 @login_required
 def members():
+    """Show full list of club members and add new club members to list and database"""
     form = MemberForm()
     members = db.query(Member).order_by(Member.member_id)
 

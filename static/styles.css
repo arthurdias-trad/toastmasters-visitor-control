@@ -37,12 +37,19 @@ legend, .alert
     border-width: 0.5px;
 }
 
+.full-list-container {
+    margin: 5vh 20vw;
+}
+
 @media only screen and (max-width: 1000px) {
     .table-container {
         margin: 5vh 9vw;
     }
     .form-box {
         margin: 2vw 10vw;
+    }
+    .full-list-container {
+        margin: 5vw 10vw;
     }
 }
 

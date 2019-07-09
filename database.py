@@ -20,6 +20,7 @@ class User(Base):
     __tablename__ = 'users'
 
     user_id = Column(Integer, primary_key=True)
+    fullname = Column(String(length=50))
     username = Column(String(length=50))
     password = Column(String(length=255))
 

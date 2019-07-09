@@ -33,3 +33,12 @@ class MemberChangeForm(FlaskForm):
     id_type = StringField("Tipo de Documento", validators=[InputRequired()], render_kw={"placeholder": "RG, RNE, Passporte"})
     id_number = StringField("Nº do Documento", validators=[InputRequired()])
     submit = SubmitField("Alterar")
+
+class GuestChangeForm(FlaskForm):
+    delete = BooleanField("Excluir?")
+    guest_id = HiddenField("Guest-ID")
+    name = StringField("Nome", validators=[InputRequired()])
+    id_type = StringField("Tipo de Documento", validators=[InputRequired()], render_kw={"placeholder": "RG, RNE, Passporte"})
+    id_number = StringField("Nº do Documento", validators=[InputRequired()])
+    tm_member = BooleanField("É membro de outro clube?")
+    submit = SubmitField("Alterar")

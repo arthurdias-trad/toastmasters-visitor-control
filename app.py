@@ -179,6 +179,7 @@ def delete():
     return render_template("delete.html", form=form, delete_id=delete_id) 
 
 @app.route('/exportar', methods=['GET'])
+@login_required
 def export():
     """Export the full list of guests and club members as a CSV file with current date"""
     date = datetime.today().strftime('%d-%m-%y')
@@ -198,6 +199,19 @@ def export():
             file_writer.writerow([guest.name, guest.id_type, guest.id_number])
         
     return send_file(f"./lista_{date}.csv", mimetype='text/csv', attachment_filename=f'lista_{date}.csv', as_attachment=True)
+
+@app.route('/download', methods=['GET'])
+@login_required
+def download():
+    date = datetime.today().strftime('%d-%m-%y')
+    members = db.query(Member).order_by(Member.name)
+    guests = db.query(Guest).order_by(Guest.name)
+    rendered_page = render_template("/lista.html", members=members, guests=guests)
+
+    with open(f'lista_{date}.html', mode="w", encoding='utf-8') as html_file:
+        html_file.write(rendered_page)
+
+    return send_file(f"./lista_{date}.html", mimetype='text/html', attachment_filename=f'lista_{date}.html', as_attachment=True)
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():

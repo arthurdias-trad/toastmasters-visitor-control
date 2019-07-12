@@ -1,24 +1,6 @@
 {% extends 'layout.html' %}
 
 {% block main %}
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
-  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
-  <script>
-    $(document).ready( function () {
-      $('#full_list').DataTable( {
-        "order": [[ 0, "asc" ]],
-        "paging": false,
-        "bInfo": false,
-        "searching": false,
-        "ordering": false,
-        "columnDefs": [
-          {"width": "60%", "targets": 0},
-          {"width": "20%", "targets": 1},
-          {"width": "20%", "targets": 2},
-        ]
-      } );
-    } );''
-  </script>
   <div class="full-list-container">
     <table id="full_list" class="table striped full-list">
       <thead>

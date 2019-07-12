@@ -6,7 +6,7 @@ import os
 import requests
 import csv
 from datetime import datetime
-from flask import Flask, render_template, url_for, redirect, request, flash, session, send_file
+from flask import Flask, render_template, url_for, redirect, request, flash, session, send_file, make_response
 from flask_session import Session
 from helpers import login_required
 from forms import LoginForm, MemberForm, MemberChangeForm, DeleteForm, GuestForm, GuestChangeForm
@@ -15,6 +15,7 @@ from werkzeug.datastructures import MultiDict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from database import Member, Guest, User
+import pdfkit
 
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
@@ -187,7 +188,7 @@ def export():
     guests = db.query(Guest).order_by(Guest.name)
 
     with open(f'lista_{date}.csv', mode="w", encoding='utf-8') as csv_file:
-        file_writer = csv.writer(csv_file, delimiter='\t', dialect="excel")
+        file_writer = csv.writer(csv_file, delimiter=',', dialect="excel")
 
         file_writer.writerow(["Membros"])
         file_writer.writerow(["Nome", "Documento", "Nº"])
@@ -200,18 +201,30 @@ def export():
         
     return send_file(f"./lista_{date}.csv", mimetype='text/csv', attachment_filename=f'lista_{date}.csv', as_attachment=True)
 
-@app.route('/download', methods=['GET'])
+@app.route('/download_<type>', methods=['GET'])
 @login_required
-def download():
+def download(type):
     date = datetime.today().strftime('%d-%m-%y')
     members = db.query(Member).order_by(Member.name)
     guests = db.query(Guest).order_by(Guest.name)
-    rendered_page = render_template("/lista.html", members=members, guests=guests)
+    rendered_page = render_template("/lista_export.html", members=members, guests=guests)
 
-    with open(f'lista_{date}.html', mode="w", encoding='utf-8') as html_file:
-        html_file.write(rendered_page)
+    if type == "html":
+        with open(f'lista_{date}.html', mode="w", encoding='utf-8') as html_file:
+            html_file.write(rendered_page)
+        return send_file(f"./lista_{date}.html", mimetype='text/html', attachment_filename=f'lista_{date}.html', as_attachment=True)
+    
+    if type == "pdf":
+        path = r"D:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+        config = pdfkit.configuration(wkhtmltopdf=path)
+        css = r".\static\styles.css"
+        pdf = pdfkit.from_string(rendered_page, False, configuration=config, css=css)
+        filename = f'lista_{date}.pdf'
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
 
-    return send_file(f"./lista_{date}.html", mimetype='text/html', attachment_filename=f'lista_{date}.html', as_attachment=True)
+        return response
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():

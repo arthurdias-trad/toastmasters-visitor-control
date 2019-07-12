@@ -4,3 +4,4 @@ members.txt
 __pycache__/
 .vscode/
 paulista_project/
+flask_session/

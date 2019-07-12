@@ -25,7 +25,7 @@ class User(Base):
     password = Column(String(length=255))
 
     def __repr__(self):
-        return f"Username={self.username}, password={self.password}"
+        return f"Username={self.username}"
 
 class Member(Base):
     __tablename__ = 'members'

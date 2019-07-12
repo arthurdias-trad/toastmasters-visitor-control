@@ -41,6 +41,12 @@ legend, .alert
     margin: 5vh 20vw;
 }
 
+.buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    margin: 2vh 30vw;
+}
+
 @media only screen and (max-width: 1000px) {
     .table-container {
         margin: 5vh 9vw;

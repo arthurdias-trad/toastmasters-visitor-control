@@ -19,10 +19,12 @@ import pdfkit
 
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
+if not os.getenv("SECRET_KEY"):
+    raise RuntimeError("SECRET_KEY is not set")
 
 app = Flask(__name__)
 app.debug = True
-app.config["SECRET_KEY"] = "development"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True

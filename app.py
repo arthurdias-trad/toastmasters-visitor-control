@@ -217,7 +217,7 @@ def download(type):
         return send_file(f"./lista_{date}.html", mimetype='text/html', attachment_filename=f'lista_{date}.html', as_attachment=True)
     
     if type == "pdf":
-        path = r"/bin/wkhtmltopdf"
+        path = r"bin/wkhtmltopdf"
         config = pdfkit.configuration(wkhtmltopdf=path)
         pdf = pdfkit.from_string(rendered_page, False, configuration=config)
         filename = f'lista_{date}.pdf'
